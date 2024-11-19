@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.emailService.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.emailService.name }}
+    release: {{ .Release.Name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.emailService.name }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.emailService.name }}
+        release: {{ .Release.Name }}
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: server
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+        image: {{ .Values.images.repository }}/{{ .Values.emailService.name }}:{{ .Values.images.tag | default .Chart.AppVersion }}
+        ports:
+        - containerPort: {{ .Values.emailService.containerPort }}
+        env:
+        - name: PORT
+          value: "{{ .Values.emailService.containerPort }}"
+        - name: DISABLE_STATS
+          value: "1"
+        - name: DISABLE_TRACING
+          value: "1"
+        - name: DISABLE_PROFILER
+          value: "1"
+        readinessProbe:
+          initialDelaySeconds: {{ .Values.emailService.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.emailService.readinessProbe.periodSeconds }}
+          grpc:
+            port: {{ .Values.emailService.containerPort }}
+        livenessProbe:
+          initialDelaySeconds: {{ .Values.emailService.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.emailService.livenessProbe.periodSeconds }}
+          grpc:
+            port: {{ .Values.emailService.containerPort }}
+        resources:
+          {{- toYaml .Values.emailService.resources | nindent 10 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.emailService.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.emailService.name }}
+    release: {{ .Release.Name }}
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ .Values.emailService.name }}
+    release: {{ .Release.Name }}
+  ports:
+  - name: grpc
+    port: {{ .Values.emailService.servicePort }}
+    targetPort: {{ .Values.emailService.containerPort }}

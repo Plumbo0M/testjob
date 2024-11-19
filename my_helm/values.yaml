@@ -1,0 +1,192 @@
+images:
+  repository: us-central1-docker.pkg.dev/google-samples/microservices-demo
+  tag: ""
+
+adService:
+  create: true
+  name: adservice
+  serviceType: ClusterIP
+  port: 8080
+  resources:
+    requests:
+      cpu: 200m
+      memory: 180Mi
+    limits:
+      cpu: 300m
+      memory: 300Mi
+
+cartService:
+  create: true
+  name: cartservice
+  resources:
+    requests:
+      cpu: 200m
+      memory: 64Mi
+    limits:
+      cpu: 300m
+      memory: 128Mi
+
+cartDatabase:
+  type: redis
+  connectionString: "redis-cart:6379"
+  inClusterRedis:
+    create: true
+    name: redis-cart
+    publicRepository: true
+    redisImage: "redis:alpine@sha256:c35af3bbcef51a62c8bae5a9a563c6f1b60d7ebaea4cb5a3ccbcc157580ae098"
+  externalRedisTlsOrigination:
+    enable: false
+    name: exernal-redis-tls-origination
+    endpointAddress: ""
+    endpointPort: ""
+    certificate: ""
+
+checkoutService:
+  create: true
+  name: checkoutservice
+  services:
+    productCatalogService:
+      port: 3550
+    shippingService:
+      port: 50051
+    paymentService:
+      port: 50051
+    emailService:
+      port: 5000
+    currencyService:
+      port: 7000
+    cartService:
+      port: 7070
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+currencyService:
+  create: true
+  name: currencyservice
+  port: 7000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+emailService:
+  create: true
+  name: emailservice
+  containerPort: 8080
+  servicePort: 5000
+  readinessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 5
+  livenessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 5
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+frontend:
+  create: true
+  name: frontend
+  externalService: true
+  cymbalBranding: false
+  platform: local
+  singleSharedSession: false
+  virtualService:
+    create: false
+    hosts:
+      - "*"
+    gateway:
+      name: asm-ingressgateway
+      namespace: asm-ingress
+      labelKey: asm
+      labelValue: ingressgateway
+  containerPort: 8080
+  servicePort: 80
+  probes:
+    readiness:
+      initialDelaySeconds: 10
+      path: "/_healthz"
+    liveness:
+      initialDelaySeconds: 10
+      path: "/_healthz"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+loadGenerator:
+  create: true
+  name: loadgenerator
+  users: 10
+  checkFrontendInitContainer: true
+  resources:
+    requests:
+      cpu: 300m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+paymentService:
+  create: true
+  name: paymentservice
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+productCatalogService:
+  create: true
+  name: productcatalogservice
+  extraLatency: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+recommendationService:
+  create: true
+  name: recommendationservice
+  resources:
+    requests:
+      cpu: 100m
+      memory: 220Mi
+    limits:
+      cpu: 200m
+      memory: 450Mi
+
+shippingService:
+  create: true
+  name: shippingservice
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+shoppingAssistantService:
+  create: false
+  name: shoppingassistantservice

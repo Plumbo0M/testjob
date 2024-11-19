@@ -1,0 +1,21 @@
+{{- if and .Values.frontend.create .Values.frontend.externalService }}
+Note: It may take a few minutes for the LoadBalancer IP to be available.
+
+Watch the status of the frontend IP address with:
+    kubectl get --namespace {{ .Release.Namespace }} svc -w {{ .Values.frontend.name }}-external
+
+Get the external IP address of the frontend:
+    export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ .Values.frontend.name }}-external -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+    echo "External IP: http://$SERVICE_IP"
+
+# If the IP address is not available after a few minutes, try:
+# kubectl describe svc {{ .Values.frontend.name }}-external
+# This can provide additional insights into the current state of the load balancer.
+{{- end }}
+{{- if .Values.frontend.virtualService.create }}
+Note: To expose the frontend via the Ingress Gateway, ensure that the virtual service is correctly configured and deployed.
+
+Get the external IP address of the ingress gateway:
+    export SERVICE_IP=$(kubectl get svc --namespace {{ .Values.frontend.virtualService.gateway.namespace }} {{ .Values.frontend.virtualService.gateway.name }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+    echo "Ingress Gateway IP: http://$SERVICE_IP"
+{{- end }}
